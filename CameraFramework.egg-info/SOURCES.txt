@@ -1,0 +1,8 @@
+CarDetection.py
+ImageSegmentation.py
+TailLightSegmentation.py
+setup.py
+CameraFramework.egg-info/PKG-INFO
+CameraFramework.egg-info/SOURCES.txt
+CameraFramework.egg-info/dependency_links.txt
+CameraFramework.egg-info/top_level.txt
