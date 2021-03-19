@@ -4,11 +4,8 @@ import matplotlib.pyplot as plt
 
 
 def ImageSegmentation(image):
-    """Segments image where there are pixels with red color
-    Parameter: An image with vehicle
-    Return: An image with all pixel different from red black"""
 
-    # image = cv2.imread("demonstration-image.png")
+    #image = cv2.imread("demonstration-image.png")
     # convert to RGB
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
@@ -17,7 +14,7 @@ def ImageSegmentation(image):
     # convert to float
     pixel_values = np.float32(pixel_values)
 
-    # print(pixel_values.shape)
+    #print(pixel_values.shape)
 
     # define stopping criteria
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.2)
@@ -36,8 +33,8 @@ def ImageSegmentation(image):
         value = mask[0][0]
         if value > 0:
             on_labels.append(cont_labels)
-            # plt.imshow(lo_square)
-            # plt.show()
+            #plt.imshow(lo_square)
+            #plt.show()
         cont_labels = cont_labels + 1
 
     # convert back to 8 bit values
@@ -60,7 +57,7 @@ def ImageSegmentation(image):
     # convert to the shape of a vector of pixel values
     masked_image = masked_image.reshape((-1, 3))
     # color (i.e cluster) to disable
-    # masked_image[labels == cluster] = [0, 0, 0]
+    #masked_image[labels == cluster] = [0, 0, 0]
     for cluster_off in range(0, k):
         if cluster_off not in on_labels:
             masked_image[labels == cluster_off] = [0, 0, 0]

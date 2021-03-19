@@ -1,0 +1,164 @@
+# USAGE
+# python deep_learning_object_detection.py --image images/example_01.jpg \
+#	--prototxt MobileNetSSD_deploy.prototxt.txt --model MobileNetSSD_deploy.caffemodel
+
+# import the necessary packages
+import numpy as np
+import argparse
+import cv2
+import matplotlib.pyplot as plt
+from matplotlib.colors import hsv_to_rgb
+from matplotlib.colors import rgb_to_hsv
+from ImageSegmentation import ImageSegmentation
+from FrontRearCarFeatures import FrontRearCarFeatures
+
+# construct the argument parse and parse the arguments
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--image", required=True,
+                help="path to input image")
+ap.add_argument("-p", "--prototxt", required=True,
+                help="path to Caffe 'deploy' prototxt file")
+ap.add_argument("-m", "--model", required=True,
+                help="path to Caffe pre-trained model")
+ap.add_argument("-c", "--confidence", type=float, default=0.2,
+                help="minimum probability to filter weak detections")
+args = vars(ap.parse_args())
+
+
+images = FrontRearCarFeatures.cardetection(args)
+
+"""# initialize the list of class labels MobileNet SSD was trained to
+# detect, then generate a set of bounding box colors for each class
+CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
+           "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
+           "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
+           "sofa", "train", "tvmonitor"]
+COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
+
+# load our serialized model from disk
+print("[INFO] loading model...")
+net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
+
+# load the input image and construct an input blob for the image
+# by resizing to a fixed 300x300 pixels and then normalizing it
+# (note: normalization is done via the authors of the MobileNet SSD
+# implementation)
+image = cv2.imread(args["image"])
+(h, w) = image.shape[:2]
+blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 0.007843, (300, 300), 127.5)
+
+# pass the blob through the network and obtain the detections and
+# predictions
+print("[INFO] computing object detections...")
+net.setInput(blob)
+detections = net.forward()
+
+images = []
+# loop over the detections
+for i in np.arange(0, detections.shape[2]):
+    # extract the confidence (i.e., probability) associated with the
+    # prediction
+    confidence = detections[0, 0, i, 2]
+
+    # filter out weak detections by ensuring the `confidence` is
+    # greater than the minimum confidence
+    if confidence > args["confidence"]:
+        # extract the index of the class label from the `detections`,
+        # then compute the (x, y)-coordinates of the bounding box for
+        # the object
+        idx = int(detections[0, 0, i, 1])
+        box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+        (startX, startY, endX, endY) = box.astype("int")
+
+        # display the prediction
+        label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
+        print("[INFO] {}".format(label))
+        # cv2.rectangle(image, (startX, startY), (endX, endY),
+        #              COLORS[idx], 2)
+        # y = startY - 15 if startY - 15 > 15 else startY + 15
+        # cv2.putText(image, label, (startX, y),
+        #            cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
+        crop_img = image[startY:endY, startX:endX]
+        images.append(crop_img)
+"""
+# show the output image
+# image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+# plt.imshow(image)
+# plt.show()
+
+dark_red = (0.1 * 255, 0.8 * 255, 1 * 255)
+# dark_red = (18, 102, 255)
+light_red = (0 * 255, 0.4 * 255, 0.5 * 255)
+# light_red = (1, 190, 200)
+# lo_square = np.full((10, 10, 3), light_red, dtype=np.uint8) / 255
+# do_square = np.full((10, 10, 3), dark_red, dtype=np.uint8) / 255
+# plt.subplot(1, 2, 1)
+# plt.imshow(hsv_to_rgb(do_square))
+# plt.subplot(1, 2, 2)
+# plt.imshow(hsv_to_rgb(lo_square))
+# plt.show()
+
+for image in images:
+    masked_image = ImageSegmentation(image)
+    gray_image = cv2.cvtColor(masked_image, cv2.COLOR_RGB2GRAY)
+    gray_image = cv2.medianBlur(gray_image, 3)
+    th = cv2.adaptiveThreshold(gray_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                               cv2.THRESH_BINARY, 3, 0)
+    # Taking a matrix of size 5 as the kernel
+    kernel = np.ones((5, 5), np.uint8)
+    img_dilation = cv2.dilate(th, kernel, iterations=1)
+    plt.imshow(img_dilation, "gray")
+    plt.show()
+
+    contours, hierarchy = cv2.findContours(img_dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # create hull array for convex hull points
+    hull = []
+    # calculate points for each contour
+    for i in range(len(contours)):
+        # creating convex hull object for each contour
+        hull.append(cv2.convexHull(contours[i], False))
+    # create an empty black image
+    drawing = np.zeros((th.shape[0], th.shape[1], 3), np.uint8)
+
+    # draw contours and hull points
+    for i in range(len(contours)):
+        color_contours = (0, 255, 0)  # green - color for contours
+        color = (255, 0, 0)  # blue - color for convex hull
+        # draw ith contour
+        if cv2.contourArea(contours[i]) > 100:
+            M = cv2.moments(contours[i])
+            cx = int(M['m10'] / M['m00'])
+            cy = int(M['m01'] / M['m00'])
+            height, width, channels = drawing.shape
+            if height/2 - 20 < cy < height/2 + 20:
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                cv2.drawContours(drawing, contours, i, color_contours, 1, 8, hierarchy)
+                # draw ith convex hull object
+                cv2.drawContours(drawing, hull, i, color, 1, 8)
+                x, y, w, h = cv2.boundingRect(hull[i])
+                cv2.drawMarker(drawing, tuple([x, y]), color=(0, 0, 255), markerType=cv2.MARKER_CROSS, thickness=2,
+                               markerSize=3)
+                cv2.rectangle(drawing, (x, y), (x + w, y + h), (155, 155, 0), 1)
+
+    plt.imshow(drawing)
+    plt.show()
+    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # hsv_image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+    # mask = cv2.inRange(hsv_image, light_red, dark_red)
+    # result = cv2.bitwise_and(image, image, mask=mask)
+    # img_gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    # laplacian = cv2.Laplacian(img_gray, cv2.CV_64F)
+    # ret, thresh_laplace = cv2.threshold(laplacian, 80, 255, cv2.THRESH_BINARY)
+    # sobelx = cv2.Sobel(img_gray, cv2.CV_64F, 1, 0, ksize=5)
+    # ret, thresh_sobelx = cv2.threshold(sobelx, 80, 255, cv2.THRESH_BINARY)
+    # sobely = cv2.Sobel(img_gray, cv2.CV_64F, 0, 1, ksize=5)
+    # ret, thresh_sobely = cv2.threshold(sobely, 80, 255, cv2.THRESH_BINARY)
+    # plt.subplot(2, 2, 1)
+    # plt.imshow(thresh_laplace, cmap='gray')
+    # plt.subplot(2, 2, 2)
+    # plt.imshow(img_gray, cmap='gray')
+    # plt.subplot(2, 2, 3)
+    # plt.imshow(thresh_sobelx, cmap='gray')
+    # plt.subplot(2, 2, 4)
+    # plt.imshow(thresh_sobely, cmap='gray')
+    # plt.show()
