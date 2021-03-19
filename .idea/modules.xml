@@ -2,7 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+<<<<<<< HEAD
       <module fileurl="file://$PROJECT_DIR$/.idea/CameraFramework.iml" filepath="$PROJECT_DIR$/.idea/CameraFramework.iml" />
+=======
+      <module fileurl="file://$PROJECT_DIR$/.idea/carDetection.iml" filepath="$PROJECT_DIR$/.idea/carDetection.iml" />
+>>>>>>> First commit
     </modules>
   </component>
 </project>
