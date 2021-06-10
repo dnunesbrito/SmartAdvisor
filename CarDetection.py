@@ -6,8 +6,9 @@ import cv2
 def CarDetection(args: dict) -> list:
     """Detects a vehicle in an image:
     Parameter: args -> A dictionary with the fields:
-                prototxt: String with file address to prototxt file
-                model: String with file address to model file
+                prototxt: String with the path to the prototxt file It contains an image classification
+                            or image segmentation model that is intended to be trained in Caffe.
+                model: String with the path to the caffe model file. This is the model of the deep neural network.
                 image: String with file address to image file to detect the car
                 confidence: The confidence to consider a vehicle as a car
     Return: An image list with image of segmented cars    """
