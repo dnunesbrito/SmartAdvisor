@@ -11,20 +11,21 @@ from matplotlib.colors import hsv_to_rgb
 from matplotlib.colors import rgb_to_hsv
 from ImageSegmentation import ImageSegmentation
 
+
 class FrontRearCarFeatures:
 
     def __init__(self):
         args = {}
 
     @staticmethod
-    def cardetection(args):
+    def cardetection(args: dict) -> list:
         # initialize the list of class labels MobileNet SSD was trained to
         # detect, then generate a set of bounding box colors for each class
         CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
                    "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
                    "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
                    "sofa", "train", "tvmonitor"]
-        #COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
+        # COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
         # load our serialized model from disk
         print("[INFO] loading model...")
@@ -73,4 +74,15 @@ class FrontRearCarFeatures:
                 images.append(crop_img)
         return images
 
+    @staticmethod
+    def SegmentationColorToLights(args: dict, dark_red_proportions: tuple, light_red_proportions: tuple):
+        dark_red = np.dot(255, dark_red_proportions)
+        light_red = np.dot(255, light_red_proportions)
+        lo_square = np.full((10, 10, 3), light_red, dtype=np.uint8) / 255
+        do_square = np.full((10, 10, 3), dark_red, dtype=np.uint8) / 255
+        plt.subplot(1, 2, 1)
+        plt.imshow(hsv_to_rgb(do_square))
+        plt.subplot(1, 2, 2)
+        plt.imshow(hsv_to_rgb(lo_square))
+        plt.show()
 
