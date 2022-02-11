@@ -8,6 +8,8 @@ def ImageSegmentation(image):
     #image = cv2.imread("demonstration-image.png")
     # convert to RGB
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    #plt.imshow(image)
+    #plt.show()
 
     # reshape the image to a 2D array of pixels and 3 color values (RGB)
     pixel_values = image.reshape((-1, 3))
